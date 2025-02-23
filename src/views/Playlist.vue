@@ -6,7 +6,7 @@
         <div v-if="loading">Loading...</div>
         <ul v-else class="w-full max-w-md bg-white p-4 rounded-lg shadow-md">
             <li v-for="(song, index) in songs" :key="index" class="py-2 border-b last:border-none">
-                🎵 {{ song.name }} - {{ song.artist }}
+                🎵 <a :href="song.url" target="_blank">{{ song.name }} - {{ song.artist }}</a>
             </li>
         </ul>
 
@@ -19,6 +19,7 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { getSoundCloudSongs } from '../api/soundcloud';
 
 export default {
     setup() {
@@ -27,23 +28,12 @@ export default {
         const songs = ref([]);
         const loading = ref(true);
 
-        const songDatabase = {
-            Happy: [{ name: 'Happy', artist: 'Pharrell Williams' }, { name: 'Uptown Funk', artist: 'Bruno Mars' }],
-            Relaxed: [{ name: 'Weightless', artist: 'Marconi Union' }, { name: 'Sunset Lover', artist: 'Petit Biscuit' }],
-            Energetic: [{ name: 'Eye of the Tiger', artist: 'Survivor' }, { name: 'Stronger', artist: 'Kanye West' }],
-            Sad: [{ name: 'Someone Like You', artist: 'Adele' }, { name: 'Fix You', artist: 'Coldplay' }],
-        };
-
-        onMounted(() => {
-            setTimeout(() => {
-                songs.value = songDatabase[mood.value] || [];
-                loading.value = false;
-            }, 1000);
+        onMounted(async () => {
+            songs.value = await getSoundCloudSongs(mood.value);
+            loading.value = false;
         });
 
         return { mood, songs, loading };
     },
 };
 </script>
-
-<style scoped></style>
