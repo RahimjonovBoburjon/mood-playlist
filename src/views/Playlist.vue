@@ -5,17 +5,18 @@
         <p class="text-lg mb-6 text-white animate-text-fade-in">Mood: <span class="font-semibold">{{ mood }}</span></p>
 
         <div v-if="loading" class="text-white animate-text-fade-in">Loading...</div>
-        
+
         <ul v-else class="w-full max-w-2xl bg-white p-6 rounded-xl shadow-2xl animate-list-fade-in space-y-4">
             <li v-for="(song, index) in songs" :key="index"
-                class="group relative px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-md">
+                class="group relative px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-md"
+                @click="playSong(song.file)">
                 <div class="flex items-center justify-between">
                     <div class="flex-1 min-w-0">
-                        <a :href="song.url" target="_blank"
-                            class="flex items-center space-x-3 text-lg font-medium text-gray-800 hover:text-indigo-600 transition-colors">
+                        <div
+                            class="flex items-center space-x-3 text-lg font-medium text-gray-800 hover:text-indigo-600 transition-colors cursor-pointer">
                             <span class="text-2xl">🎧</span>
                             <span class="truncate">{{ song.title }}</span>
-                        </a>
+                        </div>
                         <p class="ml-8 text-sm text-gray-500 truncate">{{ song.artist }}</p>
                     </div>
                 </div>
@@ -26,12 +27,7 @@
             </li>
         </ul>
 
-        <!-- <ul v-else class="w-full max-w-md bg-white p-4 rounded-lg shadow-md animate-list-fade-in">
-            <li v-for="(song, index) in songs" :key="index" class="py-2 border-b last:border-none">
-                🎵 <a :href="song.url" target="_blank" class="text-blue-500 hover:text-blue-700">{{ song.name }} - {{
-                    song.artist }}</a>
-            </li>
-        </ul> -->
+        <audio ref="audioPlayer" controls class="mt-4 w-full max-w-md hidden"></audio>
 
         <router-link to="/mood"
             class="mt-5 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 animate-button-fade-in">
@@ -50,63 +46,17 @@ export default {
         const mood = ref(route.query.mood || 'Happy');
         const songs = ref([]);
         const loading = ref(true);
+        const audioPlayer = ref(null);
 
         const offlineSongs = {
             Happy: [
-                { title: "Pharrell Williams - Happy", url: "https://www.youtube.com/watch?v=y6Sxv-sUYtM" },
-                { title: "Katy Perry - Firework", url: "https://www.youtube.com/watch?v=QGJuMBdaqIw" },
-                { title: "Bruno Mars - 24K Magic", url: "https://www.youtube.com/watch?v=UqyT8IEBkvY" },
-                { title: "BTS - Dynamite", url: "https://www.youtube.com/watch?v=gdZLi9oWNZg" },
-                { title: "Shakira - Waka Waka", url: "https://www.youtube.com/watch?v=pRpeEdMmmQ0" },
+                { title: "Pharrell Williams - Happy", artist: "Pharrell Williams", file: "/music/happy.mp3" },
+                { title: "Katy Perry - Firework", artist: "Katy Perry", file: "/music/firework.mp3" },
+                { title: "Bruno Mars - 24K Magic", artist: "Bruno Mars", file: "/music/24k.mp3" },
             ],
             Relaxed: [
-                { title: "Norah Jones - Don't Know Why", url: "https://www.youtube.com/watch?v=tO4dxvguQDk" },
-                { title: "Jack Johnson - Banana Pancakes", url: "https://www.youtube.com/watch?v=OkyrIRyrRdY" },
-                { title: "Coldplay - The Scientist", url: "https://www.youtube.com/watch?v=RB-RcX5DS5A" },
-                { title: "Michael Bublé - Feeling Good", url: "https://www.youtube.com/watch?v=Edwsf-8F3sI" },
-                { title: "Sade - Smooth Operator", url: "https://www.youtube.com/watch?v=4TYv2PhG89A" },
-            ],
-            Sad: [
-                { title: "Adele - Hello", url: "https://www.youtube.com/watch?v=YQHsXMglC9A" },
-                { title: "Sam Smith - Too Good at Goodbyes", url: "https://www.youtube.com/watch?v=AX8-YzMKZhQ" },
-                { title: "Lewis Capaldi - Someone You Loved", url: "https://www.youtube.com/watch?v=bCuhuePlP8o" },
-                { title: "Billie Eilish - Everything I Wanted", url: "https://www.youtube.com/watch?v=EgBJmlPo8Xw" },
-                { title: "Passenger - Let Her Go", url: "https://www.youtube.com/watch?v=RBumgq5yVrA" },
-            ],
-            Focus: [
-                { title: "Lofi Girl - 1AM Study Session", url: "https://www.youtube.com/watch?v=lTRiuFIWV54" },
-                { title: "Hans Zimmer - Time", url: "https://www.youtube.com/watch?v=RX6GvZxF8JY" },
-                { title: "Mozart - Piano Sonata No. 16", url: "https://www.youtube.com/watch?v=PPZgXzkZtdM" },
-                { title: "Chopin - Nocturne Op. 9 No. 2", url: "https://www.youtube.com/watch?v=9E6b3swbnWg" },
-                { title: "Calm Ambient Music", url: "https://www.youtube.com/watch?v=EX06SUp3tSo" },
-            ],
-            Party: [
-                { title: "Black Eyed Peas - I Gotta Feeling", url: "https://www.youtube.com/watch?v=uSD4vsh1zDA" },
-                { title: "Pitbull - Give Me Everything", url: "https://www.youtube.com/watch?v=EPo5wWmKEaI" },
-                { title: "LMFAO - Party Rock Anthem", url: "https://www.youtube.com/watch?v=KQ6zr6kCPj8" },
-                { title: "Avicii - Wake Me Up", url: "https://www.youtube.com/watch?v=IcrbM1l_BoI" },
-                { title: "David Guetta - Titanium", url: "https://www.youtube.com/watch?v=JRfuAukYTKg" },
-            ],
-            Chill: [
-                { title: "Joji - Slow Dancing in the Dark", url: "https://www.youtube.com/watch?v=K3Qzzggn--s" },
-                { title: "Mac Miller - Self Care", url: "https://www.youtube.com/watch?v=SsKT0s5J8ko" },
-                { title: "The Weeknd - Call Out My Name", url: "https://www.youtube.com/watch?v=M0hdqcvhPiM" },
-                { title: "Post Malone - Circles", url: "https://www.youtube.com/watch?v=wXhTHyIgQ_U" },
-                { title: "Lana Del Rey - Video Games", url: "https://www.youtube.com/watch?v=cE6wxDqdOV0" },
-            ],
-            Love: [
-                { title: "Ed Sheeran - Thinking Out Loud", url: "https://www.youtube.com/watch?v=lp-EO5I60KA" },
-                { title: "John Legend - All of Me", url: "https://www.youtube.com/watch?v=450p7goxZqg" },
-                { title: "Aerosmith - I Don't Want to Miss a Thing", url: "https://www.youtube.com/watch?v=JkK8g6FMEXE" },
-                { title: "Whitney Houston - I Will Always Love You", url: "https://www.youtube.com/watch?v=3JWTaaS7LdU" },
-                { title: "Celine Dion - My Heart Will Go On", url: "https://www.youtube.com/watch?v=WNIPqafd4As" },
-            ],
-            Workout: [
-                { title: "Eminem - Till I Collapse", url: "https://www.youtube.com/watch?v=ytQ5CYE1VZw" },
-                { title: "The Prodigy - Smack My B**** Up", url: "https://www.youtube.com/watch?v=hxgMKNeMMXA" },
-                { title: "Kanye West - Stronger", url: "https://www.youtube.com/watch?v=PsO6ZnUZI0g" },
-                { title: "DMX - X Gon’ Give It To Ya", url: "https://www.youtube.com/watch?v=fGx6K90TmCI" },
-                { title: "Linkin Park - Bleed It Out", url: "https://www.youtube.com/watch?v=OnuuYcqhzCE" },
+                { title: "Norah Jones - Don't Know Why", artist: "Norah Jones", file: "/music/dontknowwhy.mp3" },
+                { title: "Jack Johnson - Banana Pancakes", artist: "Jack Johnson", file: "/music/bananapancakes.mp3" },
             ]
         };
 
@@ -115,11 +65,15 @@ export default {
             loading.value = false;
         });
 
-        const openYouTube = (url) => {
-            window.open(url, "_blank");
+        const playSong = (file) => {
+            if (audioPlayer.value) {
+                audioPlayer.value.src = file;
+                audioPlayer.value.play();
+                audioPlayer.value.classList.remove('hidden');
+            }
         };
 
-        return { mood, songs, loading, openYouTube };
+        return { mood, songs, loading, playSong, audioPlayer };
     },
 };
 </script>
@@ -144,98 +98,4 @@ export default {
     background-size: 200% 200%;
     animation: gradientShift 10s ease infinite;
 }
-
-@keyframes textFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-text-fade-in {
-    animation: textFadeIn 1.5s ease-out;
-}
-
-@keyframes listFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-list-fade-in {
-    animation: listFadeIn 1s ease-out;
-}
-
-@keyframes buttonFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-button-fade-in {
-    animation: buttonFadeIn 1s ease-out;
-    animation-delay: 0.5s;
-}
-
-.animate-list-fade-in li {
-    animation: slideIn 0.6s ease forwards;
-    opacity: 0;
-    transform: translateX(20px);
-}
-
-@keyframes slideIn {
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes progress {
-    from {
-        width: 0
-    }
-
-    to {
-        width: 100%
-    }
-}
 </style>
-
-<!-- <script>
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import { getSoundCloudSongs } from '../api/soundcloud';
-
-export default {
-    setup() {
-        const route = useRoute();
-        const mood = ref(route.query.mood || 'Happy');
-        const songs = ref([]);
-        const loading = ref(true);
-
-        onMounted(async () => {
-            songs.value = await getSoundCloudSongs(mood.value);
-            loading.value = false;
-        });
-
-        return { mood, songs, loading };
-    },
-};
-</script> -->
