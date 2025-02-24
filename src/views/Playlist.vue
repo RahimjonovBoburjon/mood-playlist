@@ -72,7 +72,7 @@
             @loadedmetadata="initAudio"></audio>
 
         <router-link to="/mood"
-            class="mt-5 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 animate-button-fade-in">
+            class="m-5 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 animate-button-fade-in">
             Choose Another Mood
         </router-link>
     </div>
