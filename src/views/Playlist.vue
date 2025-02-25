@@ -41,35 +41,20 @@
 
                 <div v-if="isPlaying && currentSong?.file === song.file"
                     class="absolute bottom-0 left-0 h-1 bg-indigo-500" :style="{ width: progress + '%' }"></div>
-            </li>
-        </ul>
 
-        <div v-if="currentSong"
-            class="fixed bottom-0 left-0 right-0 bg-white shadow-2xl rounded-t-2xl p-4 mx-4 mb-4 transition-transform duration-300"
-            :class="{ 'translate-y-full': !isPlaying, 'translate-y-0': isPlaying }">
-            <div class="max-w-md mx-auto">
-                <input type="range" v-model="currentTime" :max="duration"
-                    class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mb-2" />
-
-                <div class="flex items-center justify-between">
+                <div v-if="currentSong?.file === song.file" class="flex items-center justify-between mt-2">
                     <button @click="skip(-10)" class="p-2 text-gray-500 hover:text-indigo-600">
-                        ⏪
+                        <i class="fas fa-backward"></i>
                     </button>
-
-                    <button @click="togglePlay"
-                        class="p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700">
-                        {{ isPlaying ? '⏸' : '▶' }}
+                    <button @click="togglePlay" class="p-2 text-gray-500 hover:text-indigo-600">
+                        <i :class="isPlaying ? 'fas fa-pause' : 'fas fa-play'"></i>
                     </button>
-
                     <button @click="skip(10)" class="p-2 text-gray-500 hover:text-indigo-600">
-                        ⏩
+                        <i class="fas fa-forward"></i>
                     </button>
                 </div>
-            </div>
-        </div>
-
-        <audio ref="audioPlayer" @timeupdate="updateProgress" @ended="handleAudioEnd"
-            @loadedmetadata="initAudio"></audio>
+            </li>
+        </ul>
 
         <router-link to="/mood"
             class="mt-5 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 animate-button-fade-in">
@@ -85,7 +70,7 @@ import { useRoute } from 'vue-router';
 export default {
     setup() {
         const route = useRoute();
-        const audioPlayer = ref(null);
+        const audioPlayer = ref(new Audio());
         const isPlaying = ref(false);
         const currentTime = ref(0);
         const duration = ref(0);
@@ -154,45 +139,58 @@ export default {
         };
 
         onMounted(() => {
-            songs.value = offlineSongs[mood.value] || offlineSongs['Happy'];
-            loading.value = false;
+            setTimeout(() => {
+                songs.value = offlineSongs[mood.value] || offlineSongs['Happy'];
+                loading.value = false;
+            }, 500);
         });
 
         const playSong = (song) => {
-            if (audioPlayer.value) {
+            if (currentSong.value && currentSong.value.file === song.file && isPlaying.value) {
+                togglePlay();
+            } else {
                 currentSong.value = song;
                 audioPlayer.value.src = song.file;
-                audioPlayer.value.play();
-                isPlaying.value = true;
+                audioPlayer.value.play()
+                    .then(() => {
+                        isPlaying.value = true;
+                        audioPlayer.value.ontimeupdate = () => {
+                            currentTime.value = audioPlayer.value.currentTime;
+                        };
+                        audioPlayer.value.onended = () => {
+                            isPlaying.value = false;
+                            currentSong.value = null;
+                        };
+                    })
+                    .catch(error => {
+                        console.error("Play error:", error);
+                        alert("Iltimos, Play tugmasini bosing!");
+                    });
             }
         };
 
         const togglePlay = () => {
-            isPlaying.value ? audioPlayer.value.pause() : audioPlayer.value.play();
+            if (isPlaying.value) {
+                audioPlayer.value.pause();
+            } else {
+                audioPlayer.value.play().catch(error => {
+                    console.error("Audio play failed:", error);
+                });
+            }
             isPlaying.value = !isPlaying.value;
         };
 
-        const updateProgress = () => {
-            currentTime.value = audioPlayer.value.currentTime;
-        };
-
-        const initAudio = () => {
-            duration.value = audioPlayer.value.duration;
-        };
-
         const skip = (seconds) => {
-            audioPlayer.value.currentTime += seconds;
+            if (audioPlayer.value) {
+                audioPlayer.value.currentTime += seconds;
+            }
         };
 
         const formatTime = (seconds) => {
+            if (seconds < 0) seconds = 0;
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return `${mins}:${secs.toString().padStart(2, '0')}`;
-        };
-
-        const handleAudioEnd = () => {
-            isPlaying.value = false;
-            currentSong.value = null;
         };
 
         return {
@@ -205,25 +203,19 @@ export default {
             duration,
             playSong,
             togglePlay,
-            updateProgress,
-            initAudio,
             skip,
             formatTime,
-            handleAudioEnd,
-            progress: computed(() => (currentTime.value / duration.value) * 100),
+            progress: computed(() => {
+                if (duration.value === 0) return 0;
+                return (currentTime.value / duration.value) * 100;
+            }),
         };
     },
 };
 </script>
 
 <style>
-/* input[type="range"]::-webkit-slider-thumb {
-    @apply w-4 h-4 bg-indigo-600 rounded-full cursor-pointer appearance-none transition-all;
-}
-
-input[type="range"]::-moz-range-thumb {
-    @apply w-4 h-4 bg-indigo-600 rounded-full cursor-pointer transition-all;
-} */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
 
 @keyframes text-pop-in {
     0% {
