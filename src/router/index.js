@@ -7,6 +7,11 @@ const routes = [
     { path: '/', component: Home },
     { path: '/mood', component: MoodSelect },
     { path: '/playlist', component: Playlist },
+    {
+        path: "/:pathMatch(.*)*",
+        component: () => import("../views/404.vue"),
+    }
+
 ];
 
 const router = createRouter({
