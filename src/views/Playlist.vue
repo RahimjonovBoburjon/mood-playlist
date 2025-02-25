@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col items-center justify-center min-h-screen bg-gradient-animate px-4">
         <div class="text-center mb-8">
-            <h2 class="text-4xl md:text-5xl font-bold text-white animate-text-pop-in">
+            <h2 class="text-4xl md:text-5xl font-bold text-white animate-text-pop-in text-center">
                 🎶 {{ mood }} Vibes
             </h2>
             <p class="mt-3 text-lg text-indigo-100 animate-text-fade-in">
@@ -16,7 +16,7 @@
 
         <ul v-else class="w-full max-w-2xl space-y-4 animate-list-stagger">
             <li v-for="(song, index) in songs" :key="index"
-                class="group relative overflow-hidden transition-all duration-300 hover:transform hover:-translate-y-1"
+                class="rounded-xl group relative overflow-hidden transition-all duration-300 hover:transform hover:-translate-y-1"
                 :class="{ 'bg-indigo-50': currentSong?.file === song.file }">
                 <div @click="playSong(song)"
                     class="flex items-center justify-between p-4 bg-white rounded-xl shadow-lg cursor-pointer hover:shadow-xl">
@@ -37,6 +37,12 @@
                     <span class="ml-4 text-sm text-gray-400">
                         {{ isPlaying && currentSong?.file === song.file ? formatTime(currentTime) : '3:45' }}
                     </span>
+
+                    <button v-if="isPlaying && currentSong?.file === song.file" @click.stop="stopSong"
+                        class="ms-3 text-white bg-red-500 hover:bg-red-600 focus:ring-2 focus:ring-red-400 rounded-full p-2 px-4 transition">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+
                 </div>
 
                 <div v-if="isPlaying && currentSong?.file === song.file"
@@ -56,8 +62,8 @@
             </li>
         </ul>
 
-        <router-link to="/mood"
-            class="mt-5 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 animate-button-fade-in">
+        <router-link to="/mood" @click="stopSong"
+            class="my-5 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 animate-button-fade-in">
             Choose Another Mood
         </router-link>
     </div>
@@ -180,6 +186,13 @@ export default {
             isPlaying.value = !isPlaying.value;
         };
 
+        const stopSong = () => {
+            audioPlayer.value.pause();
+            audioPlayer.value.currentTime = 0;
+            isPlaying.value = false;
+            currentSong.value = null;
+        };
+
         const skip = (seconds) => {
             if (audioPlayer.value) {
                 audioPlayer.value.currentTime += seconds;
@@ -203,6 +216,7 @@ export default {
             duration,
             playSong,
             togglePlay,
+            stopSong,
             skip,
             formatTime,
             progress: computed(() => {
